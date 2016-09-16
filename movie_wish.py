@@ -14,14 +14,14 @@ def get_soup_of(url):
 	:param url: 待获取的网页地址
 	"""
 	html = requests.get(url).text
-	soup = BeautifulSoup(html, 'lxml')
+	soup = BeautifulSoup(html,'lxml')
 	return (soup)
 
 
 def get_bt_search_url(movie_title):
 	"""拼接得到在BT天堂搜索某部电影时用到的url"""
-	search_head = 'http://www.bttiantang.com/s.php?q='
-	search_tail = '&sitesearch=www.bttiantang.com&domains=bttiantang.com&hl=zh-CN&ie=UTF-8&oe=UTF-8'
+	search_head = 'http://www.bttiantang.com/category.php?/'
+	search_tail = '/'
 	return search_head + movie_title + search_tail
 
 
@@ -59,12 +59,13 @@ def search_bt_movie(movie_title):
 	results = [(bt, douban) for bt in movies_bt_url for douban in bt_douban_url]
 	return results
 
-def get_downloads(url, file_size=3):
+def get_downloads(url,file_size=3):
 	"""获取某电影下载资源并按大小排序
 	:param file_size: 高清电影资源的大小下限，默认3GB
 	:param url: BT天堂网址中某部电影的页面地址
 	:return: 所有下载资源的大小和地址（字典列表）
 	"""
+	print(url)
 	soup = get_soup_of(url)
 
 	resource = []  # 存放所有满足大小要求的资源
@@ -75,6 +76,11 @@ def get_downloads(url, file_size=3):
 		return []
 
 	for i in downloads:
+
+		if 'xunleigang' in i.text:
+			print('资源被网站删除')
+			return []
+
 		size = i.p.em.get_text()
 
 		try:
@@ -99,13 +105,15 @@ def get_downloads(url, file_size=3):
 movie_list = []
 
 # 豆瓣电影 我的想看 页面
-douban_url = 'https://movie.douban.com/people/35209764/wish'
+douban_url = 'https://movie.douban.com/people/tsangtszching/wish'
 soup = get_soup_of(douban_url)
 
 # 总的想看电影数量
 wish_count = int(re.findall(r'\d+', soup.select_one('#db-usr-profile .info h1').text)[0])
 
 # 对每一页解析
+print (wish_count)
+
 for start in range(0, wish_count, 15):
 	douban_page_url = douban_url + '?start=' + str(start)
 	soup = get_soup_of(douban_page_url)
